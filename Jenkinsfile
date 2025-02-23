@@ -1,28 +1,40 @@
 pipeline {
-    agent any
-    
+    agent any  // Runs on any available agent
+
+    environment {
+        DOCKER_IMAGE = 'your-dockerhub-username/testapp'  // Replace with your actual Docker Hub username and repository name
+        DOCKER_CREDENTIALS = 'docker-hub-credentials'  // Will be set in Jenkins
+    }
+
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/abhishekemmanuel999/testrepo.git'
+                git 'https://github.com/abhishekemmanuel999/testrepo.git'  
+                // Pulls the latest code from your GitHub repository
             }
         }
-
+        
         stage('Build') {
             steps {
-                echo 'Building the application...'
+                sh 'echo "Building application..."'
+                // Here you can add real build commands like compiling Java code or installing dependencies
             }
         }
 
-        stage('Test') {
+        stage('Docker Build & Push') {
             steps {
-                echo 'Running tests...'
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS) {
+                        sh "docker build -t $DOCKER_IMAGE:latest ."  // Build Docker image
+                        sh "docker push $DOCKER_IMAGE:latest"  // Push image to Docker Hub
+                    }
+                }
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Deploying application...'
+                sh 'echo "Deployment step (e.g., running container or using Kubernetes)"'
             }
         }
     }
